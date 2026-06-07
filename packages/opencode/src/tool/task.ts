@@ -49,6 +49,10 @@ const BaseParameterFields = {
       "This should only be set if you mean to resume a previous task (you can pass a prior task_id and the task will continue the same subagent session as before instead of creating a fresh one)",
   }),
   command: Schema.optional(Schema.String).annotate({ description: "The command that triggered this task" }),
+  variant: Schema.optional(Schema.String).annotate({
+    description:
+      "Model variant for provider-specific reasoning effort (e.g., 'low', 'medium', 'high', 'max')",
+  }),
 }
 
 const BaseParameters = Schema.Struct(BaseParameterFields)
@@ -149,7 +153,8 @@ export const TaskTool = Tool.define(
         Effect.orDie,
       )
       if (msg.info.role !== "assistant") return yield* Effect.fail(new Error("Not an assistant message"))
-      const variant = msg.info.variant
+      const parentVariant = msg.info.variant
+      const resolvedVariant = params.variant ?? next.variant ?? (next.model ? undefined : parentVariant)
 
       const model = next.model ?? {
         modelID: msg.info.modelID,
@@ -159,6 +164,7 @@ export const TaskTool = Tool.define(
         parentSessionId: ctx.sessionID,
         sessionId: nextSession.id,
         model,
+        ...(resolvedVariant ? { variant: resolvedVariant } : {}),
         ...(runInBackground ? { background: true } : {}),
       }
 
@@ -179,7 +185,7 @@ export const TaskTool = Tool.define(
             modelID: model.modelID,
             providerID: model.providerID,
           },
-          variant: next.model ? undefined : variant,
+          variant: resolvedVariant,
           agent: next.name,
           tools: {
             ...(next.permission.some((rule) => rule.permission === "todowrite") ? {} : { todowrite: false }),
@@ -200,7 +206,7 @@ export const TaskTool = Tool.define(
           .prompt({
             sessionID: ctx.sessionID,
             agent: currentParent.agent ?? ctx.agent,
-            variant,
+            variant: parentVariant,
             parts: [
               {
                 type: "text",

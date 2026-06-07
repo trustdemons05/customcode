@@ -85,6 +85,7 @@ export function sameSubagentTab(a: FooterSubagentTab | undefined, b: FooterSubag
     a.status === b.status &&
     a.title === b.title &&
     a.toolCalls === b.toolCalls &&
+    a.variant === b.variant &&
     a.lastUpdatedAt === b.lastUpdatedAt
   )
 }
@@ -295,6 +296,7 @@ function taskTab(part: ToolPart, sessionID: string): FooterSubagentTab {
   const label = Locale.titlecase(text(part.state.input.subagent_type) ?? "general")
   const description = text(part.state.input.description) ?? stateTitle(part) ?? inputLabel(part.state.input) ?? ""
   const status = part.state.status === "error" ? "error" : part.state.status === "completed" ? "completed" : "running"
+  const variant = text(metadata(part, "variant"))
 
   return {
     sessionID,
@@ -305,6 +307,7 @@ function taskTab(part: ToolPart, sessionID: string): FooterSubagentTab {
     status,
     title: stateTitle(part),
     toolCalls: num(metadata(part, "toolcalls")) ?? num(metadata(part, "toolCalls")) ?? num(metadata(part, "calls")),
+    variant,
     lastUpdatedAt: stateUpdatedAt(part),
   }
 }

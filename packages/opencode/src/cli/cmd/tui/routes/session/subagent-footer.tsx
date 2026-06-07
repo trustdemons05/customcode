@@ -16,18 +16,19 @@ export function SubagentFooter() {
 
   const subagentInfo = createMemo(() => {
     const s = session()
-    if (!s) return { label: "Subagent", index: 0, total: 0 }
+    if (!s) return { label: "Subagent", variant: undefined, index: 0, total: 0 }
     const agentMatch = s.title.match(/@(\w+) subagent/)
     const label = agentMatch ? Locale.titlecase(agentMatch[1]) : "Subagent"
+    const variant = s.model?.variant
 
-    if (!s.parentID) return { label, index: 0, total: 0 }
+    if (!s.parentID) return { label, variant, index: 0, total: 0 }
 
     const siblings = sync.data.session
       .filter((x) => x.parentID === s.parentID)
       .toSorted((a, b) => a.time.created - b.time.created)
     const index = siblings.findIndex((x) => x.id === s.id)
 
-    return { label, index: index + 1, total: siblings.length }
+    return { label, variant, index: index + 1, total: siblings.length }
   })
 
   const usage = createMemo(() => {
@@ -80,6 +81,23 @@ export function SubagentFooter() {
             <text fg={theme.text}>
               <b>{subagentInfo().label}</b>
             </text>
+            <Show when={subagentInfo().variant}>
+              {(item) => (
+                <text>
+                  <span style={{ fg: theme.textMuted }}>· </span>
+                  {item().split("").map((char, i) => (
+                    <span
+                      style={{
+                        fg: [theme.error, theme.warning, theme.success, theme.info, theme.secondary][i % 5],
+                        bold: true,
+                      }}
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </text>
+              )}
+            </Show>
             <Show when={subagentInfo().total > 0}>
               <text style={{ fg: theme.textMuted }}>
                 ({subagentInfo().index} of {subagentInfo().total})

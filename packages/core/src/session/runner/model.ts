@@ -64,7 +64,11 @@ const withDefaults = (model: ModelV2.Info, route: AnyRoute) =>
 const withVariant = (model: ModelV2.Info, variantID: ModelV2.VariantID | undefined) => {
   const id = variantID === "default" || variantID === undefined ? model.request.variant : variantID
   const variant = model.variants.find((item) => item.id === id)
-  if (!variant) return model
+  if (!variant) {
+    if (id) console.error(`[variant] model=${model.id} requested=${id} found=false`)
+    return model
+  }
+  console.error(`[variant] model=${model.id} requested=${id} body=${JSON.stringify(variant.body)} headers=${JSON.stringify(variant.headers)}`)
   return produce(model, (draft) => {
     Object.assign(draft.request.headers, variant.headers)
     Object.assign(draft.request.body, variant.body)

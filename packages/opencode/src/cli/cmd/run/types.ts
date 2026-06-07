@@ -186,6 +186,7 @@ export type FooterSubagentTab = {
   status: "running" | "completed" | "error"
   title?: string
   toolCalls?: number
+  variant?: string
   lastUpdatedAt: number
 }
 
